@@ -1,85 +1,87 @@
 // ============================================================
-// CODEHUB - WEB CODE EDITOR
+// CODEHUB - EDITOR DE CÓDIGO
+// script.js
 // ============================================================
 
 
+// ============================================================
 // ELEMENTOS
-const codeEditor = document.getElementById("codeEditor");
-const lineNumbers = document.getElementById("lineNumbers");
+// ============================================================
 
-const fileList = document.getElementById("fileList");
-const tabsContainer = document.getElementById("tabs");
+const $ = (selector) => document.querySelector(selector);
 
-const previewFrame = document.getElementById("previewFrame");
-const consoleOutput = document.getElementById("consoleOutput");
+const codeEditor = $("#codeEditor");
+const lineNumbers = $("#lineNumbers");
 
-const projectNameInput = document.getElementById("projectName");
-const projectTreeName = document.getElementById("projectTreeName");
+const fileList = $("#fileList");
+const tabsContainer = $("#tabs");
 
-const fileTypeStatus = document.getElementById("fileTypeStatus");
-const cursorPosition = document.getElementById("cursorPosition");
-const saveStatus = document.getElementById("saveStatus");
+const previewFrame = $("#previewFrame");
+const consoleOutput = $("#consoleOutput");
 
+const projectNameInput = $("#projectName");
+const projectTreeName = $("#projectTreeName");
 
-// BOTÕES
-const runBtn = document.getElementById("runBtn");
-const saveProjectBtn = document.getElementById("saveProjectBtn");
+const fileTypeStatus = $("#fileTypeStatus");
+const cursorPosition = $("#cursorPosition");
+const saveStatus = $("#saveStatus");
 
-const addFileBtn = document.getElementById("addFileBtn");
-const newFileSidebarBtn = document.getElementById("newFileSidebarBtn");
+const runBtn = $("#runBtn");
+const saveProjectBtn = $("#saveProjectBtn");
 
-const refreshPreviewBtn = document.getElementById("refreshPreviewBtn");
-const openPreviewBtn = document.getElementById("openPreviewBtn");
+const addFileBtn = $("#addFileBtn");
+const newFileSidebarBtn = $("#newFileSidebarBtn");
 
-const clearConsoleBtn = document.getElementById("clearConsoleBtn");
+const refreshPreviewBtn = $("#refreshPreviewBtn");
+const openPreviewBtn = $("#openPreviewBtn");
 
+const clearConsoleBtn = $("#clearConsoleBtn");
 
-// MODAL NOVO ARQUIVO
-const fileModal = document.getElementById("fileModal");
+const fileModal = $("#fileModal");
+const newFileName = $("#newFileName");
+const closeModalBtn = $("#closeModalBtn");
+const cancelFileBtn = $("#cancelFileBtn");
+const createFileBtn = $("#createFileBtn");
 
-const newFileName = document.getElementById("newFileName");
+const renameModal = $("#renameModal");
+const renameFileInput = $("#renameFileInput");
+const closeRenameModalBtn = $("#closeRenameModalBtn");
+const cancelRenameBtn = $("#cancelRenameBtn");
+const confirmRenameBtn = $("#confirmRenameBtn");
 
-const closeModalBtn = document.getElementById("closeModalBtn");
-const cancelFileBtn = document.getElementById("cancelFileBtn");
-const createFileBtn = document.getElementById("createFileBtn");
-
-
-// MODAL RENOMEAR
-const renameModal = document.getElementById("renameModal");
-
-const renameFileInput = document.getElementById("renameFileInput");
-
-const closeRenameModalBtn = document.getElementById("closeRenameModalBtn");
-const cancelRenameBtn = document.getElementById("cancelRenameBtn");
-const confirmRenameBtn = document.getElementById("confirmRenameBtn");
-
-
-// CONTEXT MENU
-const contextMenu = document.getElementById("contextMenu");
-
-const renameFileBtn = document.getElementById("renameFileBtn");
-const deleteFileBtn = document.getElementById("deleteFileBtn");
+const contextMenu = $("#contextMenu");
+const renameFileBtn = $("#renameFileBtn");
+const deleteFileBtn = $("#deleteFileBtn");
 
 
 // ============================================================
-// ESTADO DO PROJETO
+// CONFIGURAÇÕES
 // ============================================================
 
-const STORAGE_KEY = "codehub_project_v1";
+const STORAGE_KEY = "codehub_project_v2";
 
-let project = {
-    name: "Meu Projeto",
+let saveTimer = null;
+let contextFile = null;
+let renameTarget = null;
 
-    files: {
-        "index.html": `<!DOCTYPE html>
+
+// ============================================================
+// PROJETO PADRÃO
+// ============================================================
+
+function createDefaultProject() {
+
+    return {
+        name: "Meu Projeto",
+
+        files: {
+            "index.html": `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Meu Projeto</title>
-
-    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -88,9 +90,7 @@ let project = {
 
         <h1>Olá, CodeHub! 🚀</h1>
 
-        <p>
-            Seu editor HTML está funcionando.
-        </p>
+        <p>O preview está funcionando.</p>
 
         <button id="testButton">
             Clique aqui
@@ -98,22 +98,20 @@ let project = {
 
     </main>
 
-    <script src="script.js"><\/script>
-
 </body>
 </html>`,
 
-        "style.css": `* {
+            "style.css": `* {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-
     min-height: 100vh;
 
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     font-family: Arial, sans-serif;
 
@@ -121,13 +119,16 @@ body {
 }
 
 .container {
-    text-align: center;
-
     padding: 40px;
+    text-align: center;
 }
 
 h1 {
     color: #238636;
+}
+
+p {
+    color: #57606a;
 }
 
 button {
@@ -139,29 +140,65 @@ button {
     background: #238636;
     color: white;
 
+    font-size: 16px;
     cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.85;
 }`,
 
-        "script.js": `const button = document.getElementById("testButton");
+            "script.js": `const button = document.getElementById("testButton");
 
-button.addEventListener("click", () => {
-    alert("Olá! O JavaScript está funcionando! 🚀");
-});`
-    },
+if (button) {
+    button.addEventListener("click", () => {
+        alert("JavaScript funcionando! 🚀");
+    });
+}
 
-    openFiles: [
-        "index.html",
-        "style.css",
-        "script.js"
-    ],
+console.log("Projeto executado com sucesso.");`
+        },
 
-    activeFile: "index.html"
-};
+        openFiles: [
+            "index.html",
+            "style.css",
+            "script.js"
+        ],
+
+        activeFile: "index.html"
+    };
+
+}
 
 
-let contextFile = null;
-let renameTarget = null;
-let saveTimeout = null;
+let project = createDefaultProject();
+
+
+// ============================================================
+// SEGURANÇA
+// ============================================================
+
+function hasOwn(object, key) {
+
+    return Object.prototype.hasOwnProperty.call(
+        object,
+        key
+    );
+
+}
+
+
+function getFileExtension(fileName) {
+
+    const parts = fileName.split(".");
+
+    if (parts.length < 2) {
+        return "";
+    }
+
+    return parts.pop().toLowerCase();
+
+}
 
 
 // ============================================================
@@ -170,28 +207,93 @@ let saveTimeout = null;
 
 function loadProject() {
 
-    const savedProject = localStorage.getItem(STORAGE_KEY);
+    const savedData = localStorage.getItem(STORAGE_KEY);
 
-    if (!savedProject) {
+    if (!savedData) {
         return;
     }
 
     try {
 
-        const parsedProject = JSON.parse(savedProject);
+        const savedProject = JSON.parse(savedData);
 
         if (
-            parsedProject &&
-            parsedProject.files &&
-            Object.keys(parsedProject.files).length > 0
+            savedProject &&
+            typeof savedProject === "object" &&
+            savedProject.files &&
+            typeof savedProject.files === "object"
         ) {
-            project = parsedProject;
+
+            project = savedProject;
+
         }
 
     } catch (error) {
 
         console.error("Erro ao carregar projeto:", error);
 
+        project = createDefaultProject();
+
+    }
+
+}
+
+
+// ============================================================
+// NORMALIZAR PROJETO
+// ============================================================
+
+function normalizeProject() {
+
+    if (
+        !project.files ||
+        typeof project.files !== "object" ||
+        Object.keys(project.files).length === 0
+    ) {
+
+        project.files = createDefaultProject().files;
+
+    }
+
+
+    if (
+        !Array.isArray(project.openFiles)
+    ) {
+
+        project.openFiles = [];
+
+    }
+
+
+    project.openFiles = project.openFiles.filter(
+        (fileName) => hasOwn(project.files, fileName)
+    );
+
+
+    if (
+        !project.activeFile ||
+        !hasOwn(project.files, project.activeFile)
+    ) {
+
+        project.activeFile =
+            Object.keys(project.files)[0];
+
+    }
+
+
+    if (
+        !project.openFiles.includes(project.activeFile)
+    ) {
+
+        project.openFiles.push(
+            project.activeFile
+        );
+
+    }
+
+
+    if (!project.name) {
+        project.name = "Meu Projeto";
     }
 
 }
@@ -201,87 +303,90 @@ function loadProject() {
 // SALVAR PROJETO
 // ============================================================
 
-function saveProject(showMessage = true) {
+function saveProject(showConsole = false) {
 
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(project)
-    );
+    saveCurrentEditorContent();
 
-    saveStatus.textContent = "Salvo";
+    try {
 
-    if (showMessage) {
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(project)
+        );
+
+        saveStatus.textContent = "Salvo";
+
+        if (showConsole) {
+
+            addConsole(
+                "Projeto salvo com sucesso.",
+                "success"
+            );
+
+        }
+
+    } catch (error) {
+
+        saveStatus.textContent = "Erro ao salvar";
 
         addConsole(
-            "Projeto salvo no navegador.",
-            "success"
+            "Erro ao salvar o projeto.",
+            "error"
         );
+
+        console.error(error);
 
     }
 
 }
 
 
+// ============================================================
 // SALVAMENTO AUTOMÁTICO
-function autoSave() {
+// ============================================================
 
-    clearTimeout(saveTimeout);
+function scheduleAutoSave() {
+
+    clearTimeout(saveTimer);
 
     saveStatus.textContent = "Alterações não salvas";
 
-    saveTimeout = setTimeout(() => {
+    saveTimer = setTimeout(() => {
 
         saveProject(false);
 
-    }, 600);
+    }, 500);
 
 }
 
 
 // ============================================================
-// ÍCONES DOS ARQUIVOS
+// ÍCONE
 // ============================================================
 
 function getFileIcon(fileName) {
 
-    const extension =
-        fileName
-            .split(".")
-            .pop()
-            .toLowerCase();
+    const extension = getFileExtension(fileName);
 
     const icons = {
-
         html: "🌐",
         htm: "🌐",
-
         css: "🎨",
-
         js: "⚡",
         mjs: "⚡",
-
-        json: "📦",
-
         py: "🐍",
-
-        txt: "📄",
-
+        json: "📦",
         md: "📝",
-
+        txt: "📄",
         xml: "📋",
-
         svg: "🖼️",
-
         png: "🖼️",
         jpg: "🖼️",
         jpeg: "🖼️",
-        gif: "🖼️",
-
-        default: "📄"
-
+        gif: "🖼️"
     };
 
-    return icons[extension] || icons.default;
+    return icons[extension] || "📄";
 
 }
 
@@ -292,34 +397,20 @@ function getFileIcon(fileName) {
 
 function getFileType(fileName) {
 
-    const extension =
-        fileName
-            .split(".")
-            .pop()
-            .toLowerCase();
+    const extension = getFileExtension(fileName);
 
     const types = {
-
         html: "HTML",
         htm: "HTML",
-
         css: "CSS",
-
         js: "JAVASCRIPT",
         mjs: "JAVASCRIPT",
-
         py: "PYTHON",
-
         json: "JSON",
-
-        txt: "TEXT",
-
         md: "MARKDOWN",
-
+        txt: "TEXT",
         xml: "XML",
-
         svg: "SVG"
-
     };
 
     return types[extension] || "TEXT";
@@ -328,40 +419,53 @@ function getFileType(fileName) {
 
 
 // ============================================================
-// RENDERIZAR EXPLORADOR
+// SALVAR CONTEÚDO ATUAL
+// ============================================================
+
+function saveCurrentEditorContent() {
+
+    if (
+        !project.activeFile ||
+        !hasOwn(project.files, project.activeFile)
+    ) {
+        return;
+    }
+
+    project.files[project.activeFile] =
+        codeEditor.value;
+
+}
+
+
+// ============================================================
+// EXPLORADOR DE ARQUIVOS
 // ============================================================
 
 function renderFileList() {
 
     fileList.innerHTML = "";
 
-    const files =
-        Object.keys(project.files)
-            .sort((a, b) => {
+    const files = Object.keys(project.files).sort(
+        (a, b) => {
 
-                // index.html primeiro
-                if (a === "index.html") return -1;
-                if (b === "index.html") return 1;
+            if (a === "index.html") return -1;
+            if (b === "index.html") return 1;
 
-                return a.localeCompare(b);
+            return a.localeCompare(b);
 
-            });
+        }
+    );
 
 
-    files.forEach(fileName => {
+    files.forEach((fileName) => {
 
         const item = document.createElement("div");
 
-        item.className =
-            "file-item" +
-            (
-                fileName === project.activeFile
-                    ? " active"
-                    : ""
-            );
+        item.className = "file-item";
 
-
-        item.dataset.file = fileName;
+        if (fileName === project.activeFile) {
+            item.classList.add("active");
+        }
 
 
         const icon = document.createElement("span");
@@ -376,11 +480,9 @@ function renderFileList() {
         name.textContent = fileName;
 
 
-        item.appendChild(icon);
-        item.appendChild(name);
+        item.append(icon, name);
 
 
-        // ABRIR ARQUIVO
         item.addEventListener("click", () => {
 
             openFile(fileName);
@@ -388,20 +490,16 @@ function renderFileList() {
         });
 
 
-        // MENU CONTEXTO
-        item.addEventListener("contextmenu", event => {
+        item.addEventListener("contextmenu", (event) => {
 
             event.preventDefault();
 
             contextFile = fileName;
 
-            contextMenu.style.left =
-                event.clientX + "px";
-
-            contextMenu.style.top =
-                event.clientY + "px";
-
-            contextMenu.classList.remove("hidden");
+            showContextMenu(
+                event.clientX,
+                event.clientY
+            );
 
         });
 
@@ -414,7 +512,7 @@ function renderFileList() {
 
 
 // ============================================================
-// RENDERIZAR ABAS
+// ABAS
 // ============================================================
 
 function renderTabs() {
@@ -422,23 +520,20 @@ function renderTabs() {
     tabsContainer.innerHTML = "";
 
 
-    project.openFiles.forEach(fileName => {
+    project.openFiles.forEach((fileName) => {
 
-        // Arquivo pode ter sido excluído
-        if (!project.files.hasOwnProperty(fileName)) {
+        if (!hasOwn(project.files, fileName)) {
             return;
         }
 
 
         const tab = document.createElement("div");
 
-        tab.className =
-            "tab" +
-            (
-                fileName === project.activeFile
-                    ? " active"
-                    : ""
-            );
+        tab.className = "tab";
+
+        if (fileName === project.activeFile) {
+            tab.classList.add("active");
+        }
 
 
         const icon = document.createElement("span");
@@ -457,12 +552,9 @@ function renderTabs() {
         close.textContent = "×";
 
 
-        tab.appendChild(icon);
-        tab.appendChild(name);
-        tab.appendChild(close);
+        tab.append(icon, name, close);
 
 
-        // TROCAR ABA
         tab.addEventListener("click", () => {
 
             openFile(fileName);
@@ -470,8 +562,7 @@ function renderTabs() {
         });
 
 
-        // FECHAR ABA
-        close.addEventListener("click", event => {
+        close.addEventListener("click", (event) => {
 
             event.stopPropagation();
 
@@ -493,16 +584,14 @@ function renderTabs() {
 
 function openFile(fileName) {
 
-    if (!project.files.hasOwnProperty(fileName)) {
+    if (!hasOwn(project.files, fileName)) {
         return;
     }
 
 
-    // Salva arquivo anterior
     saveCurrentEditorContent();
 
 
-    // Adiciona aba se ainda não existe
     if (!project.openFiles.includes(fileName)) {
 
         project.openFiles.push(fileName);
@@ -513,13 +602,12 @@ function openFile(fileName) {
     project.activeFile = fileName;
 
 
-    // Carrega conteúdo
     codeEditor.value = project.files[fileName];
 
 
-    // Atualiza interface
     fileTypeStatus.textContent =
         getFileType(fileName);
+
 
     renderFileList();
     renderTabs();
@@ -527,7 +615,7 @@ function openFile(fileName) {
     updateLineNumbers();
     updateCursorPosition();
 
-    autoSave();
+    scheduleAutoSave();
 
 }
 
@@ -538,7 +626,7 @@ function openFile(fileName) {
 
 function closeTab(fileName) {
 
-    if (project.openFiles.length === 1) {
+    if (project.openFiles.length <= 1) {
         return;
     }
 
@@ -547,26 +635,33 @@ function closeTab(fileName) {
         project.openFiles.indexOf(fileName);
 
 
-    project.openFiles.splice(index, 1);
+    project.openFiles =
+        project.openFiles.filter(
+            (file) => file !== fileName
+        );
 
 
     if (project.activeFile === fileName) {
 
+        let newIndex = index - 1;
+
+        if (newIndex < 0) {
+            newIndex = 0;
+        }
+
+
         const nextFile =
-            project.openFiles[
-                Math.max(0, index - 1)
-            ];
+            project.openFiles[newIndex];
+
 
         project.activeFile = nextFile;
 
         codeEditor.value =
             project.files[nextFile];
 
+
         fileTypeStatus.textContent =
             getFileType(nextFile);
-
-        updateLineNumbers();
-        updateCursorPosition();
 
     }
 
@@ -574,56 +669,42 @@ function closeTab(fileName) {
     renderTabs();
     renderFileList();
 
+    updateLineNumbers();
+    updateCursorPosition();
+
     saveProject(false);
 
 }
 
 
 // ============================================================
-// SALVAR EDITOR ATUAL
-// ============================================================
-
-function saveCurrentEditorContent() {
-
-    const activeFile = project.activeFile;
-
-    if (!activeFile) {
-        return;
-    }
-
-    project.files[activeFile] =
-        codeEditor.value;
-
-}
-
-
-// ============================================================
-// NUMERAÇÃO DE LINHAS
+// LINHAS
 // ============================================================
 
 function updateLineNumbers() {
 
-    const lineCount =
+    const lines =
         codeEditor.value.split("\n").length;
 
 
-    let numbers = "";
+    const numbers = [];
 
 
-    for (let i = 1; i <= lineCount; i++) {
+    for (let line = 1; line <= lines; line++) {
 
-        numbers += i + "\n";
+        numbers.push(line);
 
     }
 
 
-    lineNumbers.textContent = numbers;
+    lineNumbers.textContent =
+        numbers.join("\n");
 
 }
 
 
 // ============================================================
-// POSIÇÃO DO CURSOR
+// CURSOR
 // ============================================================
 
 function updateCursorPosition() {
@@ -632,12 +713,12 @@ function updateCursorPosition() {
         codeEditor.selectionStart;
 
 
-    const beforeCursor =
-        codeEditor.value.substring(0, position);
+    const textBeforeCursor =
+        codeEditor.value.slice(0, position);
 
 
     const lines =
-        beforeCursor.split("\n");
+        textBeforeCursor.split("\n");
 
 
     const line =
@@ -655,8 +736,20 @@ function updateCursorPosition() {
 
 
 // ============================================================
-// SCROLL SINCRONIZADO
+// EDITOR EVENTS
 // ============================================================
+
+codeEditor.addEventListener("input", () => {
+
+    saveCurrentEditorContent();
+
+    updateLineNumbers();
+    updateCursorPosition();
+
+    scheduleAutoSave();
+
+});
+
 
 codeEditor.addEventListener("scroll", () => {
 
@@ -666,49 +759,39 @@ codeEditor.addEventListener("scroll", () => {
 });
 
 
-// ============================================================
-// EVENTOS DO EDITOR
-// ============================================================
-
-codeEditor.addEventListener("input", () => {
-
-    saveCurrentEditorContent();
-
-    updateLineNumbers();
+codeEditor.addEventListener("keyup", () => {
 
     updateCursorPosition();
-
-    autoSave();
 
 });
 
 
-codeEditor.addEventListener(
-    "keyup",
-    updateCursorPosition
-);
+codeEditor.addEventListener("click", () => {
+
+    updateCursorPosition();
+
+});
 
 
-codeEditor.addEventListener(
-    "click",
-    updateCursorPosition
-);
+codeEditor.addEventListener("select", () => {
+
+    updateCursorPosition();
+
+});
 
 
-// TAB PARA INDENTAÇÃO
-codeEditor.addEventListener("keydown", event => {
+codeEditor.addEventListener("keydown", (event) => {
 
+    // TAB
     if (event.key === "Tab") {
 
         event.preventDefault();
-
 
         const start =
             codeEditor.selectionStart;
 
         const end =
             codeEditor.selectionEnd;
-
 
         const value =
             codeEditor.value;
@@ -721,20 +804,23 @@ codeEditor.addEventListener("keydown", event => {
 
 
         codeEditor.selectionStart =
-            codeEditor.selectionEnd =
+            start + 4;
+
+        codeEditor.selectionEnd =
             start + 4;
 
 
         saveCurrentEditorContent();
 
         updateLineNumbers();
+        updateCursorPosition();
 
-        autoSave();
+        scheduleAutoSave();
 
     }
 
 
-    // CTRL + S
+    // CTRL / CMD + S
     if (
         (event.ctrlKey || event.metaKey) &&
         event.key.toLowerCase() === "s"
@@ -742,9 +828,7 @@ codeEditor.addEventListener("keydown", event => {
 
         event.preventDefault();
 
-        saveCurrentEditorContent();
-
-        saveProject();
+        saveProject(true);
 
     }
 
@@ -752,68 +836,35 @@ codeEditor.addEventListener("keydown", event => {
 
 
 // ============================================================
-// CRIAR NOVO ARQUIVO
+// NOVO ARQUIVO
 // ============================================================
 
-function createNewFile() {
+function openFileModal() {
 
-    const fileName =
-        newFileName.value.trim();
+    newFileName.value = "";
 
+    fileModal.classList.remove("hidden");
 
-    if (!fileName) {
+    setTimeout(() => {
 
         newFileName.focus();
 
-        return;
-
-    }
-
-
-    if (project.files.hasOwnProperty(fileName)) {
-
-        alert("Já existe um arquivo com esse nome.");
-
-        return;
-
-    }
-
-
-    project.files[fileName] =
-        getDefaultFileContent(fileName);
-
-
-    project.openFiles.push(fileName);
-
-
-    closeFileModal();
-
-    renderFileList();
-
-    openFile(fileName);
-
-    saveProject(false);
-
-
-    addConsole(
-        `Arquivo criado: ${fileName}`,
-        "success"
-    );
+    }, 50);
 
 }
 
 
-// ============================================================
-// CONTEÚDO PADRÃO
-// ============================================================
+function closeFileModal() {
+
+    fileModal.classList.add("hidden");
+
+}
+
 
 function getDefaultFileContent(fileName) {
 
     const extension =
-        fileName
-            .split(".")
-            .pop()
-            .toLowerCase();
+        getFileExtension(fileName);
 
 
     const templates = {
@@ -822,12 +873,10 @@ function getDefaultFileContent(fileName) {
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Novo Projeto</title>
+    <title>Novo Arquivo</title>
 </head>
-
 <body>
 
     <h1>Olá!</h1>
@@ -854,15 +903,14 @@ console.log("Arquivo carregado.");`,
 print("Olá, Python!")`,
 
         json: `{
-    "name": "Meu Projeto",
-    "version": "1.0.0"
+    "name": "novo-projeto"
 }`,
 
-        txt: "",
+        md: `# Novo documento
 
-        md: `# Novo arquivo
+Escreva aqui.`,
 
-Escreva aqui...`
+        txt: ""
 
     };
 
@@ -872,29 +920,59 @@ Escreva aqui...`
 }
 
 
-// ============================================================
-// MODAL
-// ============================================================
+function createNewFile() {
 
-function openFileModal() {
+    const fileName =
+        newFileName.value.trim();
 
-    newFileName.value = "";
 
-    fileModal.classList.remove("hidden");
+    if (!fileName) {
 
-    setTimeout(() => {
+        alert("Digite o nome do arquivo.");
+
         newFileName.focus();
-    }, 50);
+
+        return;
+
+    }
+
+
+    if (hasOwn(project.files, fileName)) {
+
+        alert("Já existe um arquivo com este nome.");
+
+        return;
+
+    }
+
+
+    project.files[fileName] =
+        getDefaultFileContent(fileName);
+
+
+    project.openFiles.push(fileName);
+
+
+    closeFileModal();
+
+
+    openFile(fileName);
+
+
+    saveProject(false);
+
+
+    addConsole(
+        `Arquivo criado: ${fileName}`,
+        "success"
+    );
 
 }
 
 
-function closeFileModal() {
-
-    fileModal.classList.add("hidden");
-
-}
-
+// ============================================================
+// EVENTOS NOVO ARQUIVO
+// ============================================================
 
 addFileBtn.addEventListener(
     "click",
@@ -926,19 +1004,20 @@ createFileBtn.addEventListener(
 );
 
 
-// ENTER NO MODAL
-newFileName.addEventListener("keydown", event => {
+newFileName.addEventListener(
+    "keydown",
+    (event) => {
 
-    if (event.key === "Enter") {
-        createNewFile();
+        if (event.key === "Enter") {
+            createNewFile();
+        }
+
     }
+);
 
-});
 
-
-// TEMPLATES
 document.querySelectorAll(".file-template")
-    .forEach(button => {
+    .forEach((button) => {
 
         button.addEventListener("click", () => {
 
@@ -953,12 +1032,61 @@ document.querySelectorAll(".file-template")
 
 
 // ============================================================
-// RENOMEAR ARQUIVO
+// MENU CONTEXTO
+// ============================================================
+
+function showContextMenu(x, y) {
+
+    contextMenu.classList.remove("hidden");
+
+
+    const menuWidth =
+        contextMenu.offsetWidth;
+
+    const menuHeight =
+        contextMenu.offsetHeight;
+
+
+    let left = x;
+    let top = y;
+
+
+    if (left + menuWidth > window.innerWidth) {
+
+        left =
+            window.innerWidth - menuWidth - 10;
+
+    }
+
+
+    if (top + menuHeight > window.innerHeight) {
+
+        top =
+            window.innerHeight - menuHeight - 10;
+
+    }
+
+
+    contextMenu.style.left = `${left}px`;
+    contextMenu.style.top = `${top}px`;
+
+}
+
+
+function hideContextMenu() {
+
+    contextMenu.classList.add("hidden");
+
+}
+
+
+// ============================================================
+// RENOMEAR
 // ============================================================
 
 function openRenameModal(fileName) {
 
-    if (!fileName) {
+    if (!fileName || !hasOwn(project.files, fileName)) {
         return;
     }
 
@@ -996,17 +1124,26 @@ function renameFile() {
         renameFileInput.value.trim();
 
 
-    if (!renameTarget || !newName) {
+    if (!renameTarget) {
         return;
+    }
+
+
+    if (!newName) {
+
+        alert("Digite um nome.");
+
+        return;
+
     }
 
 
     if (
         newName !== renameTarget &&
-        project.files.hasOwnProperty(newName)
+        hasOwn(project.files, newName)
     ) {
 
-        alert("Já existe um arquivo com esse nome.");
+        alert("Já existe um arquivo com este nome.");
 
         return;
 
@@ -1014,9 +1151,7 @@ function renameFile() {
 
 
     const oldName = renameTarget;
-
-    const content =
-        project.files[oldName];
+    const content = project.files[oldName];
 
 
     delete project.files[oldName];
@@ -1025,18 +1160,18 @@ function renameFile() {
     project.files[newName] = content;
 
 
-    // Atualiza abas
     project.openFiles =
-        project.openFiles.map(fileName => {
+        project.openFiles.map((fileName) => {
 
-            return fileName === oldName
-                ? newName
-                : fileName;
+            if (fileName === oldName) {
+                return newName;
+            }
+
+            return fileName;
 
         });
 
 
-    // Atualiza arquivo ativo
     if (project.activeFile === oldName) {
 
         project.activeFile = newName;
@@ -1046,11 +1181,17 @@ function renameFile() {
 
     closeRenameModal();
 
-    renderFileList();
-    renderTabs();
+
+    codeEditor.value =
+        project.files[project.activeFile];
+
 
     fileTypeStatus.textContent =
         getFileType(project.activeFile);
+
+
+    renderFileList();
+    renderTabs();
 
     saveProject(false);
 
@@ -1062,6 +1203,134 @@ function renameFile() {
 
 }
 
+
+// ============================================================
+// EXCLUIR
+// ============================================================
+
+function deleteFile(fileName) {
+
+    if (!fileName || !hasOwn(project.files, fileName)) {
+        return;
+    }
+
+
+    const filesCount =
+        Object.keys(project.files).length;
+
+
+    if (filesCount <= 1) {
+
+        alert(
+            "O projeto precisa ter pelo menos um arquivo."
+        );
+
+        return;
+
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `Deseja excluir o arquivo "${fileName}"?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    delete project.files[fileName];
+
+
+    project.openFiles =
+        project.openFiles.filter(
+            (file) => file !== fileName
+        );
+
+
+    if (project.activeFile === fileName) {
+
+        project.activeFile =
+            project.openFiles[0] ||
+            Object.keys(project.files)[0];
+
+
+        codeEditor.value =
+            project.files[project.activeFile];
+
+
+        fileTypeStatus.textContent =
+            getFileType(project.activeFile);
+
+    }
+
+
+    normalizeProject();
+
+    renderFileList();
+    renderTabs();
+
+    updateLineNumbers();
+    updateCursorPosition();
+
+    saveProject(false);
+
+
+    addConsole(
+        `Arquivo excluído: ${fileName}`,
+        "warn"
+    );
+
+}
+
+
+// ============================================================
+// EVENTOS CONTEXTO
+// ============================================================
+
+renameFileBtn.addEventListener(
+    "click",
+    () => {
+
+        hideContextMenu();
+
+        openRenameModal(contextFile);
+
+    }
+);
+
+
+deleteFileBtn.addEventListener(
+    "click",
+    () => {
+
+        hideContextMenu();
+
+        deleteFile(contextFile);
+
+    }
+);
+
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        if (!contextMenu.contains(event.target)) {
+
+            hideContextMenu();
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// EVENTOS RENOMEAR
+// ============================================================
 
 closeRenameModalBtn.addEventListener(
     "click",
@@ -1083,7 +1352,7 @@ confirmRenameBtn.addEventListener(
 
 renameFileInput.addEventListener(
     "keydown",
-    event => {
+    (event) => {
 
         if (event.key === "Enter") {
             renameFile();
@@ -1094,124 +1363,230 @@ renameFileInput.addEventListener(
 
 
 // ============================================================
-// EXCLUIR ARQUIVO
+// PREVIEW
 // ============================================================
 
-function deleteFile(fileName) {
+function getAllFilesByExtension(extension) {
 
-    if (!fileName) {
-        return;
-    }
+    return Object.keys(project.files)
+        .filter((fileName) => {
 
+            return getFileExtension(fileName) === extension;
 
-    const confirmDelete =
-        confirm(
-            `Deseja excluir "${fileName}"?`
-        );
+        })
+        .sort((a, b) => {
 
+            // style.css primeiro
+            if (a === "style.css") return -1;
+            if (b === "style.css") return 1;
 
-    if (!confirmDelete) {
-        return;
-    }
+            // script.js primeiro
+            if (a === "script.js") return -1;
+            if (b === "script.js") return 1;
 
+            return a.localeCompare(b);
 
-    const files =
-        Object.keys(project.files);
+        });
 
-
-    if (files.length <= 1) {
-
-        alert(
-            "O projeto precisa ter pelo menos um arquivo."
-        );
-
-        return;
-
-    }
+}
 
 
-    delete project.files[fileName];
+// Remove referências locais a CSS
+function removeLocalCssLinks(html) {
 
-
-    project.openFiles =
-        project.openFiles.filter(
-            file => file !== fileName
-        );
-
-
-    // Se arquivo ativo foi excluído
-    if (project.activeFile === fileName) {
-
-        const nextFile =
-            project.openFiles[0] ||
-            Object.keys(project.files)[0];
-
-
-        project.activeFile = nextFile;
-
-        codeEditor.value =
-            project.files[nextFile];
-
-        fileTypeStatus.textContent =
-            getFileType(nextFile);
-
-        updateLineNumbers();
-        updateCursorPosition();
-
-    }
-
-
-    renderFileList();
-    renderTabs();
-
-    saveProject(false);
-
-
-    addConsole(
-        `Arquivo excluído: ${fileName}`,
-        "warn"
+    return html.replace(
+        /<link\b[^>]*href=["'][^"']+\.css["'][^>]*>/gi,
+        ""
     );
 
 }
 
 
-// ============================================================
-// MENU CONTEXTO
-// ============================================================
+// Remove referências locais a JS
+function removeLocalScripts(html) {
 
-renameFileBtn.addEventListener("click", () => {
+    return html.replace(
+        /<script\b[^>]*src=["'][^"']+\.js["'][^>]*><\/script>/gi,
+        ""
+    );
 
-    contextMenu.classList.add("hidden");
-
-    openRenameModal(contextFile);
-
-});
+}
 
 
-deleteFileBtn.addEventListener("click", () => {
+// Impede que </style> feche nossa tag
+function escapeStyleContent(css) {
 
-    contextMenu.classList.add("hidden");
+    return css.replace(
+        /<\/style>/gi,
+        "<\\/style>"
+    );
 
-    deleteFile(contextFile);
-
-});
+}
 
 
-document.addEventListener("click", event => {
+// Impede que </script> feche nossa tag
+function escapeScriptContent(js) {
 
-    if (!contextMenu.contains(event.target)) {
+    return js.replace(
+        /<\/script>/gi,
+        "<\\/script>"
+    );
 
-        contextMenu.classList.add("hidden");
+}
+
+
+// CONSTRUIR PREVIEW
+function buildPreview() {
+
+    saveCurrentEditorContent();
+
+
+    const html =
+        project.files["index.html"] || "";
+
+
+    if (!html.trim()) {
+
+        return {
+            success: false,
+            message:
+                "Não foi encontrado conteúdo em index.html."
+        };
 
     }
 
-});
+
+    const cssFiles =
+        getAllFilesByExtension("css");
 
 
-// ============================================================
-// PREVIEW
-// ============================================================
+    const jsFiles =
+        getAllFilesByExtension("js");
 
+
+    const cssCode =
+        cssFiles
+            .map((fileName) => {
+
+                return `/* ===== ${fileName} ===== */\n` +
+                    project.files[fileName];
+
+            })
+            .join("\n\n");
+
+
+    const jsCode =
+        jsFiles
+            .map((fileName) => {
+
+                return `// ===== ${fileName} =====\n` +
+                    project.files[fileName];
+
+            })
+            .join("\n\n");
+
+
+    let finalHtml = html;
+
+
+    // Remove referências aos arquivos locais
+    // porque vamos inserir o conteúdo diretamente
+    finalHtml = removeLocalCssLinks(finalHtml);
+
+    finalHtml = removeLocalScripts(finalHtml);
+
+
+    // Adiciona um listener para enviar erros ao editor
+    const previewBridge = `
+<script>
+(function () {
+    function send(type, message) {
+        parent.postMessage({
+            source: "codehub-preview",
+            type: type,
+            message: String(message)
+        }, "*");
+    }
+
+    window.onerror = function (message, source, line, column) {
+        send(
+            "error",
+            message + " (linha " + line + ", coluna " + column + ")"
+        );
+    };
+
+    window.addEventListener("unhandledrejection", function (event) {
+        send("error", event.reason || "Promise rejeitada.");
+    });
+
+    console.log = function () {
+        send(
+            "log",
+            Array.from(arguments).join(" ")
+        );
+    };
+})();
+<\/script>`;
+
+
+    const cssTag = `
+<style>
+${escapeStyleContent(cssCode)}
+</style>`;
+
+
+    const jsTag = `
+<script>
+${escapeScriptContent(jsCode)}
+<\/script>`;
+
+
+    // Insere CSS antes de </head>
+    if (/<\/head>/i.test(finalHtml)) {
+
+        finalHtml =
+            finalHtml.replace(
+                /<\/head>/i,
+                cssTag + "\n" + previewBridge + "\n</head>"
+            );
+
+    } else {
+
+        finalHtml =
+            cssTag +
+            previewBridge +
+            finalHtml;
+
+    }
+
+
+    // Insere JS antes de </body>
+    if (/<\/body>/i.test(finalHtml)) {
+
+        finalHtml =
+            finalHtml.replace(
+                /<\/body>/i,
+                jsTag + "\n</body>"
+            );
+
+    } else {
+
+        finalHtml += jsTag;
+
+    }
+
+
+    return {
+        success: true,
+        content: finalHtml,
+        cssFiles,
+        jsFiles
+    };
+
+}
+
+
+// EXECUTAR PREVIEW
 function runPreview() {
 
     saveCurrentEditorContent();
@@ -1219,20 +1594,13 @@ function runPreview() {
     saveProject(false);
 
 
-    const html =
-        project.files["index.html"] || "";
-
-    const css =
-        project.files["style.css"] || "";
-
-    const js =
-        project.files["script.js"] || "";
+    const result = buildPreview();
 
 
-    if (!html) {
+    if (!result.success) {
 
         addConsole(
-            "Nenhum index.html encontrado.",
+            result.message,
             "error"
         );
 
@@ -1241,62 +1609,23 @@ function runPreview() {
     }
 
 
-    // Remove links externos para os arquivos principais
-    let finalHtml = html;
+    // Limpa o iframe antes de executar novamente
+    previewFrame.srcdoc = "";
 
 
-    // Injeta CSS
-    const styleTag =
-        `<style>
-${css}
-</style>`;
+    // Pequeno timeout para forçar recarregamento
+    setTimeout(() => {
+
+        previewFrame.srcdoc =
+            result.content;
 
 
-    if (finalHtml.includes("</head>")) {
+        addConsole(
+            `Preview executado. CSS: ${result.cssFiles.length} | JS: ${result.jsFiles.length}`,
+            "success"
+        );
 
-        finalHtml =
-            finalHtml.replace(
-                "</head>",
-                `${styleTag}</head>`
-            );
-
-    } else {
-
-        finalHtml =
-            styleTag + finalHtml;
-
-    }
-
-
-    // Injeta JavaScript
-    const scriptTag =
-        `<script>
-${js}
-<\/script>`;
-
-
-    if (finalHtml.includes("</body>")) {
-
-        finalHtml =
-            finalHtml.replace(
-                "</body>",
-                `${scriptTag}</body>`
-            );
-
-    } else {
-
-        finalHtml += scriptTag;
-
-    }
-
-
-    previewFrame.srcdoc = finalHtml;
-
-
-    addConsole(
-        "Preview executado com sucesso.",
-        "success"
-    );
+    }, 20);
 
 }
 
@@ -1317,42 +1646,110 @@ refreshPreviewBtn.addEventListener(
 );
 
 
-openPreviewBtn.addEventListener("click", () => {
+openPreviewBtn.addEventListener(
+    "click",
+    () => {
 
-    const previewContent =
-        previewFrame.srcdoc;
-
-
-    const newWindow =
-        window.open("", "_blank");
+        const result = buildPreview();
 
 
-    if (!newWindow) {
+        if (!result.success) {
 
-        addConsole(
-            "O navegador bloqueou a nova janela.",
-            "error"
+            addConsole(
+                result.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const previewWindow =
+            window.open(
+                "",
+                "_blank"
+            );
+
+
+        if (!previewWindow) {
+
+            addConsole(
+                "O navegador bloqueou a abertura da nova janela.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        previewWindow.document.open();
+
+        previewWindow.document.write(
+            result.content
         );
 
-        return;
+        previewWindow.document.close();
 
     }
+);
 
 
-    newWindow.document.open();
+// ============================================================
+// MENSAGENS DO PREVIEW
+// ============================================================
 
-    newWindow.document.write(
-        previewContent
-    );
+window.addEventListener(
+    "message",
+    (event) => {
 
-    newWindow.document.close();
+        if (
+            !event.data ||
+            event.data.source !== "codehub-preview"
+        ) {
+            return;
+        }
 
-});
+
+        if (event.data.type === "error") {
+
+            addConsole(
+                `Preview: ${event.data.message}`,
+                "error"
+            );
+
+        }
+
+
+        if (event.data.type === "log") {
+
+            addConsole(
+                event.data.message,
+                "info"
+            );
+
+        }
+
+    }
+);
 
 
 // ============================================================
 // CONSOLE
 // ============================================================
+
+function escapeHtml(text) {
+
+    const element =
+        document.createElement("div");
+
+    element.textContent = String(text);
+
+    return element.innerHTML;
+
+}
+
 
 function addConsole(message, type = "info") {
 
@@ -1364,8 +1761,16 @@ function addConsole(message, type = "info") {
         `console-message ${type}`;
 
 
-    item.innerHTML =
-        `<span>›</span> ${escapeHtml(message)}`;
+    const prefix = document.createElement("span");
+
+    prefix.textContent = "› ";
+
+
+    const content =
+        document.createTextNode(String(message));
+
+
+    item.append(prefix, content);
 
 
     consoleOutput.appendChild(item);
@@ -1377,93 +1782,92 @@ function addConsole(message, type = "info") {
 }
 
 
-function escapeHtml(text) {
+clearConsoleBtn.addEventListener(
+    "click",
+    () => {
 
-    const div =
-        document.createElement("div");
+        consoleOutput.innerHTML = "";
 
-    div.textContent = text;
+        addConsole(
+            "Console limpo.",
+            "info"
+        );
 
-    return div.innerHTML;
-
-}
-
-
-clearConsoleBtn.addEventListener("click", () => {
-
-    consoleOutput.innerHTML = "";
-
-    addConsole(
-        "Console limpo.",
-        "info"
-    );
-
-});
+    }
+);
 
 
 // ============================================================
 // NOME DO PROJETO
 // ============================================================
 
-projectNameInput.addEventListener("input", () => {
+projectNameInput.addEventListener(
+    "input",
+    () => {
 
-    project.name =
-        projectNameInput.value;
-
-
-    projectTreeName.textContent =
-        project.name.toUpperCase();
-
-
-    autoSave();
-
-});
+        project.name =
+            projectNameInput.value.trim() ||
+            "Meu Projeto";
 
 
-// ============================================================
-// SALVAR
-// ============================================================
-
-saveProjectBtn.addEventListener("click", () => {
-
-    saveCurrentEditorContent();
-
-    saveProject();
-
-});
+        projectTreeName.textContent =
+            project.name.toUpperCase();
 
 
-// ============================================================
-// TECLAS GLOBAIS
-// ============================================================
-
-document.addEventListener("keydown", event => {
-
-    // CTRL + ENTER = RUN
-    if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter"
-    ) {
-
-        event.preventDefault();
-
-        runPreview();
+        scheduleAutoSave();
 
     }
+);
 
 
-    // ESC = FECHAR MODAIS
-    if (event.key === "Escape") {
+// ============================================================
+// BOTÃO SALVAR
+// ============================================================
 
-        closeFileModal();
+saveProjectBtn.addEventListener(
+    "click",
+    () => {
 
-        closeRenameModal();
-
-        contextMenu.classList.add("hidden");
+        saveProject(true);
 
     }
+);
 
-});
+
+// ============================================================
+// ATALHOS GLOBAIS
+// ============================================================
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        // CTRL / CMD + ENTER = RUN
+        if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            runPreview();
+
+        }
+
+
+        // ESC
+        if (event.key === "Escape") {
+
+            closeFileModal();
+
+            closeRenameModal();
+
+            hideContextMenu();
+
+        }
+
+    }
+);
 
 
 // ============================================================
@@ -1474,48 +1878,19 @@ function initialize() {
 
     loadProject();
 
-
-    // Garante que existe arquivo ativo
-    if (
-        !project.activeFile ||
-        !project.files.hasOwnProperty(
-            project.activeFile
-        )
-    ) {
-
-        project.activeFile =
-            Object.keys(project.files)[0];
-
-    }
-
-
-    // Garante openFiles
-    project.openFiles =
-        project.openFiles.filter(
-            file => project.files.hasOwnProperty(file)
-        );
-
-
-    if (project.openFiles.length === 0) {
-
-        project.openFiles = [
-            project.activeFile
-        ];
-
-    }
+    normalizeProject();
 
 
     projectNameInput.value =
-        project.name || "Meu Projeto";
+        project.name;
 
 
     projectTreeName.textContent =
-        (project.name || "Meu Projeto")
-            .toUpperCase();
+        project.name.toUpperCase();
 
 
     codeEditor.value =
-        project.files[project.activeFile];
+        project.files[project.activeFile] || "";
 
 
     fileTypeStatus.textContent =
@@ -1532,15 +1907,23 @@ function initialize() {
 
 
     addConsole(
-        "Projeto carregado.",
+        "CodeHub iniciado.",
         "success"
     );
 
 
-    // Executa o projeto inicial
-    setTimeout(runPreview, 300);
+    // Executa o preview inicial
+    setTimeout(() => {
+
+        runPreview();
+
+    }, 100);
 
 }
 
+
+// ============================================================
+// START
+// ============================================================
 
 initialize();
