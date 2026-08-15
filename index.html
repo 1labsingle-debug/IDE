@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeHub - Editor HTML</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- APP -->
+    <div class="app">
+
+        <!-- HEADER -->
+        <header class="topbar">
+
+            <div class="brand">
+                <div class="brand-icon">&lt;/&gt;</div>
+
+                <div>
+                    <h1>CodeHub</h1>
+                    <span>Web Code Studio</span>
+                </div>
+            </div>
+
+            <div class="project-name">
+                <span class="status-dot"></span>
+                <input
+                    type="text"
+                    id="projectName"
+                    value="Meu Projeto"
+                    placeholder="Nome do projeto"
+                >
+            </div>
+
+            <div class="top-actions">
+
+                <button class="header-btn" id="saveProjectBtn" title="Salvar projeto">
+                    💾
+                    <span>Salvar</span>
+                </button>
+
+                <button class="run-btn" id="runBtn">
+                    ▶
+                    <span>Run</span>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- MAIN -->
+        <main class="workspace">
+
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+
+                <div class="sidebar-header">
+                    <span>EXPLORADOR</span>
+
+                    <button id="addFileBtn" title="Novo arquivo">
+                        +
+                    </button>
+                </div>
+
+
+                <div class="project-root">
+
+                    <div class="folder-root">
+                        <span class="folder-arrow">▼</span>
+                        <span class="folder-icon">📁</span>
+                        <span id="projectTreeName">MEU PROJETO</span>
+                    </div>
+
+                    <div id="fileList" class="file-list"></div>
+
+                </div>
+
+
+                <div class="sidebar-footer">
+
+                    <button id="newFileSidebarBtn">
+                        <span>＋</span>
+                        Novo arquivo
+                    </button>
+
+                </div>
+
+            </aside>
+
+
+            <!-- EDITOR AREA -->
+            <section class="editor-section">
+
+                <!-- TABS -->
+                <div class="tabs-container">
+
+                    <div id="tabs" class="tabs"></div>
+
+                </div>
+
+
+                <!-- EDITOR -->
+                <div class="editor-wrapper">
+
+                    <div id="lineNumbers" class="line-numbers">1</div>
+
+                    <textarea
+                        id="codeEditor"
+                        spellcheck="false"
+                        autocapitalize="off"
+                        autocomplete="off"
+                        autocorrect="off"
+                    ></textarea>
+
+                </div>
+
+
+                <!-- STATUS BAR -->
+                <div class="statusbar">
+
+                    <div class="status-left">
+                        <span id="fileTypeStatus">HTML</span>
+                        <span>UTF-8</span>
+                    </div>
+
+                    <div class="status-right">
+                        <span id="cursorPosition">Ln 1, Col 1</span>
+                        <span id="saveStatus">Salvo</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- PREVIEW -->
+            <section class="preview-section">
+
+                <div class="preview-header">
+
+                    <div class="preview-title">
+                        <span class="preview-dot red"></span>
+                        <span class="preview-dot yellow"></span>
+                        <span class="preview-dot green"></span>
+
+                        <strong>PREVIEW</strong>
+                    </div>
+
+                    <div class="preview-actions">
+
+                        <button id="refreshPreviewBtn" title="Atualizar preview">
+                            ↻
+                        </button>
+
+                        <button id="openPreviewBtn" title="Abrir preview">
+                            ↗
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="preview-body">
+
+                    <iframe
+                        id="previewFrame"
+                        title="Preview"
+                        sandbox="allow-scripts"
+                    ></iframe>
+
+                </div>
+
+
+                <!-- CONSOLE -->
+                <div class="console">
+
+                    <div class="console-header">
+
+                        <span>CONSOLE</span>
+
+                        <button id="clearConsoleBtn">
+                            Limpar
+                        </button>
+
+                    </div>
+
+                    <div id="consoleOutput" class="console-output">
+                        <div class="console-message info">
+                            <span>›</span>
+                            CodeHub pronto.
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- MODAL NOVO ARQUIVO -->
+    <div id="fileModal" class="modal hidden">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h2>Novo arquivo</h2>
+
+                <button id="closeModalBtn">×</button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label for="newFileName">
+                    Nome do arquivo
+                </label>
+
+                <input
+                    id="newFileName"
+                    type="text"
+                    placeholder="Exemplo: game.js"
+                    autocomplete="off"
+                >
+
+                <div class="file-suggestions">
+
+                    <button class="file-template" data-file="index.html">
+                        HTML
+                    </button>
+
+                    <button class="file-template" data-file="style.css">
+                        CSS
+                    </button>
+
+                    <button class="file-template" data-file="script.js">
+                        JS
+                    </button>
+
+                    <button class="file-template" data-file="main.py">
+                        Python
+                    </button>
+
+                    <button class="file-template" data-file="data.json">
+                        JSON
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button id="cancelFileBtn" class="btn-secondary">
+                    Cancelar
+                </button>
+
+                <button id="createFileBtn" class="btn-primary">
+                    Criar arquivo
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL RENOMEAR -->
+    <div id="renameModal" class="modal hidden">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <h2>Renomear arquivo</h2>
+
+                <button id="closeRenameModalBtn">×</button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label for="renameFileInput">
+                    Novo nome
+                </label>
+
+                <input
+                    id="renameFileInput"
+                    type="text"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button id="cancelRenameBtn" class="btn-secondary">
+                    Cancelar
+                </button>
+
+                <button id="confirmRenameBtn" class="btn-primary">
+                    Renomear
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MENU CONTEXTO -->
+    <div id="contextMenu" class="context-menu hidden">
+
+        <button id="renameFileBtn">
+            ✏️ Renomear
+        </button>
+
+        <button id="deleteFileBtn" class="danger">
+            🗑 Excluir
+        </button>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
